@@ -964,4 +964,17 @@ body::before {
 }
 .submit-status.success { color: #a3e635; }
 .submit-status.error { color: #f87171; }
+.your-user-id {
+    text-align: center;
+    font-size: clamp(11px, 2.8vw, 14px);
+    font-family: 'Nunito', sans-serif;
+    color: rgba(255,255,255,0.5);
+    margin: 4px 0;
+}
+.your-user-id span {
+    color: #60a5fa;
+    font-weight: 700;
+    font-family: 'Fredoka One', cursive;
+    letter-spacing: 0.5px;
+}
 .hidden { display: none !important; }

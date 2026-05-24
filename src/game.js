@@ -119,8 +119,9 @@ const Game = (function() {
         fetchGlobalLeaderboard('global-leaderboard-start');
         renderLocalRanking('local-ranking-start');
 
-        // 确保匿名用户 ID 已创建
-        getOrCreateUserId();
+        // 显示用户 ID
+        const userId = getOrCreateUserId();
+        document.getElementById('menu-user-id').textContent = userId;
 
         // 初始化背景视差元素
         initBackgroundElements();
@@ -199,6 +200,7 @@ const Game = (function() {
             Assets.Sound.stopPropeller();
             resetGameWorld();
             // 返回主菜单时刷新排行
+            document.getElementById('menu-user-id').textContent = getOrCreateUserId();
             fetchGlobalLeaderboard('global-leaderboard-start');
             fetchGlobalLeaderboard('global-leaderboard');
             renderLocalRanking('local-ranking-start');
@@ -614,8 +616,11 @@ const Game = (function() {
 
         document.getElementById('gameover-menu').classList.remove('hidden');
 
-        // 存储本地排行
+        // 显示用户 ID
         const userId = getOrCreateUserId();
+        document.getElementById('display-user-id').textContent = userId;
+
+        // 存储本地排行
         addLocalScore(score, userId);
         renderLocalRanking('local-ranking-gameover');
 
