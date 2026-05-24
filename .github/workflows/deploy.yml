@@ -1,60 +1,43 @@
 # ============================================================
 # Bouncy Hop 🤖 — GitHub Actions 自动部署
-# 每次推送到 main 分支自动构建并发布到 Cloudflare Pages
+# 每次推送到 main 分支自动发布到 GitHub Pages
 # ============================================================
-name: Deploy to Cloudflare Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
-  # 允许从 GitHub Actions 标签手动触发
   workflow_dispatch:
 
-# 确保每次部署互不干扰
+# 权限设置：允许写入 Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # 设置执行权限
-    permissions:
-      contents: read
-      deployments: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: 📥 拉取代码
         uses: actions/checkout@v4
 
-      - name: ⚡ 设置 Node.js
-        uses: actions/setup-node@v4
+      - name: ⚙️ 配置 GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: 📤 上传构建产物
+        uses: actions/upload-pages-artifact@v3
         with:
-          node-version: 20
+          path: "."
 
-      - name: 📦 安装 Wrangler CLI
-        run: npm install -g wrangler
-
-      - name: 📋 校验项目文件
-        run: |
-          echo "✅ index.html: $(test -f index.html && echo '存在' || echo '缺失')"
-          echo "✅ style.css: $(test -f style.css && echo '存在' || echo '缺失')"
-          echo "✅ src/game.js: $(test -f src/game.js && echo '存在' || echo '缺失')"
-
-      - name: 🚀 部署到 Cloudflare Pages
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          npx wrangler pages deploy . \
-            --project-name=bouncy-hop \
-            --branch=${{ github.ref_name }}
-
-      - name: 🔗 输出部署 URL
-        if: success()
-        run: |
-          echo "============================================"
-          echo "  ✅ 部署成功！"
-          echo "  项目: bouncy-hop"
-          echo "  分支: ${{ github.ref_name }}"
-          echo "  Cloudflare Dashboard: https://dash.cloudflare.com"
-          echo "============================================"
+      - name: 🚀 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
