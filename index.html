@@ -43,23 +43,6 @@
                 <div class="stats-box">
                     <p class="stat-title">🏆 最高分</p>
                     <p id="menu-high-score">0</p>
-                    <p class="your-user-id" style="margin-top:4px">👤 你的ID: <span id="menu-user-id">---</span></p>
-                </div>
-
-                <!-- 本地排行 -->
-                <div class="leaderboard-box">
-                    <p class="stat-title">📱 本地排行</p>
-                    <div id="local-ranking-start" class="leaderboard-list">
-                        <p class="leaderboard-loading">加载中...</p>
-                    </div>
-                </div>
-
-                <!-- 全服排行 -->
-                <div class="leaderboard-box">
-                    <p class="stat-title">🌐 全服排行</p>
-                    <div id="global-leaderboard-start" class="leaderboard-list">
-                        <p class="leaderboard-loading">加载中...</p>
-                    </div>
                 </div>
 
                 <div class="controls-info">
@@ -121,28 +104,27 @@
 
                 <div id="new-record-badge" class="new-record hidden">🎉 新纪录!</div>
 
-                <p class="your-user-id">👤 你的ID: <span id="display-user-id">---</span></p>
-
-                <!-- 本地排行 -->
-                <div class="leaderboard-box leaderboard-compact">
-                    <p class="stat-title">📱 本地排行</p>
-                    <div id="local-ranking-gameover" class="leaderboard-list">
-                        <p class="leaderboard-loading">加载中...</p>
-                    </div>
-                </div>
-
-                <!-- 全服排行 -->
-                <div class="leaderboard-box leaderboard-compact">
-                    <p class="stat-title">🌐 全服排行</p>
-                    <div id="global-leaderboard" class="leaderboard-list">
-                        <p class="leaderboard-loading">加载中...</p>
-                    </div>
-                </div>
-
                 <div class="button-group">
                     <button id="btn-restart" class="btn-cartoon btn-play">再玩一次</button>
                     <button id="btn-home" class="btn-cartoon btn-blue">返回主菜单</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 排行榜入口按钮（左下角浮动） -->
+    <button id="btn-leaderboard" class="lb-btn">🏆</button>
+
+    <!-- 排行榜弹窗 -->
+    <div id="leaderboard-modal" class="lb-modal hidden">
+        <div class="lb-modal-content">
+            <div class="lb-modal-header">
+                <span class="lb-modal-title">排行榜</span>
+                <span class="lb-user-id" id="lb-user-id"></span>
+                <button id="lb-close" class="lb-close-btn">✕</button>
+            </div>
+            <div class="leaderboard-list" id="lb-local-list">
+                <p class="leaderboard-loading">加载中...</p>
             </div>
         </div>
     </div>

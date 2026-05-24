@@ -114,14 +114,8 @@ const Game = (function() {
         highScore = parseInt(localStorage.getItem('doodle_bounce_highscore') || '0');
         document.getElementById('menu-high-score').textContent = highScore;
 
-        // 加载在线排行榜
-        fetchGlobalLeaderboard('global-leaderboard');
-        fetchGlobalLeaderboard('global-leaderboard-start');
-        renderLocalRanking('local-ranking-start');
-
-        // 显示用户 ID
-        const userId = getOrCreateUserId();
-        document.getElementById('menu-user-id').textContent = userId;
+        // 确保匿名用户 ID 已创建
+        getOrCreateUserId();
 
         // 初始化背景视差元素
         initBackgroundElements();
@@ -181,6 +175,7 @@ const Game = (function() {
             Assets.Sound.stopRocket();
             Assets.Sound.stopPropeller();
             resetGameWorld();
+            document.getElementById('btn-leaderboard').classList.remove('hidden');
         });
 
         // 重新开始 (在结算菜单中)
@@ -199,14 +194,27 @@ const Game = (function() {
             Assets.Sound.stopRocket();
             Assets.Sound.stopPropeller();
             resetGameWorld();
-            // 返回主菜单时刷新排行
-            document.getElementById('menu-user-id').textContent = getOrCreateUserId();
-            fetchGlobalLeaderboard('global-leaderboard-start');
-            fetchGlobalLeaderboard('global-leaderboard');
-            renderLocalRanking('local-ranking-start');
+            document.getElementById('btn-leaderboard').classList.remove('hidden');
         });
 
-        // 分数已自动提交，无需手动操作
+        // ---------- 排行榜按钮与弹窗 ----------
+        const modal = document.getElementById('leaderboard-modal');
+        const btn = document.getElementById('btn-leaderboard');
+
+        btn.addEventListener('click', () => {
+            // 显示用户 ID
+            document.getElementById('lb-user-id').textContent = getOrCreateUserId();
+            // 刷新排行数据
+            renderLocalRanking('lb-local-list');
+            modal.classList.remove('hidden');
+        });
+
+        document.getElementById('lb-close').addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        });
 
         // 皮肤切换
         const skinBtns = document.querySelectorAll('.skin-btn');
@@ -365,7 +373,11 @@ const Game = (function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    fetchGlobalLeaderboard('global-leaderboard');
+                    // 如果是通过按钮自动提交且弹窗已打开，刷新
+                    const container = document.getElementById('lb-global-list');
+                    if (container && container.closest('.lb-modal') && !container.closest('.hidden')) {
+                        fetchGlobalLeaderboard('lb-global-list');
+                    }
                 }
             })
             .catch(() => {
@@ -577,22 +589,27 @@ const Game = (function() {
         player.jump(14.6);
 
         currentState = STATES.PLAYING;
+        document.getElementById('btn-leaderboard').classList.add('hidden');
     }
 
     function pauseGame() {
         currentState = STATES.PAUSED;
         document.getElementById('pause-menu').classList.remove('hidden');
+        document.getElementById('btn-leaderboard').classList.remove('hidden');
     }
 
     function resumeGame() {
         currentState = STATES.PLAYING;
         document.getElementById('pause-menu').classList.add('hidden');
+        document.getElementById('btn-leaderboard').classList.add('hidden');
     }
 
     function gameOver() {
+        if (currentState === STATES.GAMEOVER) return;
         currentState = STATES.GAMEOVER;
         Assets.Sound.stopRocket();
         Assets.Sound.stopPropeller();
+        document.getElementById('btn-leaderboard').classList.remove('hidden');
 
         // 更新历史高分
         let isNewRecord = false;
@@ -616,17 +633,12 @@ const Game = (function() {
 
         document.getElementById('gameover-menu').classList.remove('hidden');
 
-        // 显示用户 ID
-        const userId = getOrCreateUserId();
-        document.getElementById('display-user-id').textContent = userId;
-
         // 存储本地排行
+        const userId = getOrCreateUserId();
         addLocalScore(score, userId);
-        renderLocalRanking('local-ranking-gameover');
 
         // 自动提交到全服排行（静默，不影响游戏体验）
         submitGlobalScore(score);
-        fetchGlobalLeaderboard('global-leaderboard');
     }
 
     // 触发震屏
@@ -741,8 +753,8 @@ const Game = (function() {
                 // 如果没触发怪物死亡但掉下去，也直接游戏结束
                 player.isDead = true;
                 Assets.Sound.playGameOver();
+                gameOver();
             }
-            gameOver();
         }
 
         // 13. 更新屏幕震屏计时
