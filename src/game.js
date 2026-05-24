@@ -119,14 +119,8 @@ const Game = (function() {
         fetchGlobalLeaderboard('global-leaderboard-start');
         renderLocalRanking('local-ranking-start');
 
-        // 恢复上次输入的昵称
-        const savedName = getPlayerName();
-        if (savedName) {
-            document.getElementById('player-name-input').value = savedName;
-        }
-
-        // 确保匿名设备 ID 已创建
-        getOrCreatePlayerId();
+        // 确保匿名用户 ID 已创建
+        getOrCreateUserId();
 
         // 初始化背景视差元素
         initBackgroundElements();
@@ -210,27 +204,7 @@ const Game = (function() {
             renderLocalRanking('local-ranking-start');
         });
 
-        // 提交分数到全服排行
-        document.getElementById('btn-submit-score').addEventListener('click', () => {
-            const nameInput = document.getElementById('player-name-input');
-            const name = nameInput.value.trim();
-            if (!name) {
-                const statusEl = document.getElementById('submit-status');
-                statusEl.className = 'submit-status error';
-                statusEl.textContent = '请输入昵称';
-                statusEl.classList.remove('hidden');
-                return;
-            }
-            savePlayerName(name);
-            submitGlobalScore(name, score);
-        });
-
-        // 回车键提交分数
-        document.getElementById('player-name-input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('btn-submit-score').click();
-            }
-        });
+        // 分数已自动提交，无需手动操作
 
         // 皮肤切换
         const skinBtns = document.querySelectorAll('.skin-btn');
@@ -285,13 +259,15 @@ const Game = (function() {
     // 3. 用户标识 + 本地排行 + 全服排行
     // ----------------------------------------------------------------------
 
-    /** 生成唯一匿名设备 ID（首次访问时创建） */
-    function getOrCreatePlayerId() {
-        const KEY = 'bouncy_player_id';
+    /** 生成可读的用户 ID（首次访问时创建），同时作为昵称和唯一标识 */
+    function getOrCreateUserId() {
+        const KEY = 'bouncy_user_id';
         let id = localStorage.getItem(KEY);
         if (!id) {
-            // 生成 v4 UUID
-            id = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+            // 时间戳 + 随机数生成 6 位可读编号
+            const code = Date.now().toString(36).slice(-3).toUpperCase() +
+                         Math.random().toString(36).slice(2, 5).toUpperCase();
+            id = 'User' + code;
             localStorage.setItem(KEY, id);
         }
         return id;
@@ -299,14 +275,6 @@ const Game = (function() {
 
     function getLeaderboardApiUrl() {
         return '/api/score';
-    }
-
-    // 昵称存取
-    function getPlayerName() {
-        return localStorage.getItem('bouncy_player_name') || '';
-    }
-    function savePlayerName(name) {
-        localStorage.setItem('bouncy_player_name', name);
     }
 
     // ---------- 本地排行（自己设备上的历史分数） ----------
@@ -379,15 +347,9 @@ const Game = (function() {
             });
     }
 
-    // 提交分数到全服排行
-    function submitGlobalScore(name, score) {
-        const statusEl = document.getElementById('submit-status');
-        const submitBtn = document.getElementById('btn-submit-score');
-        if (!statusEl || !submitBtn) return;
-
-        statusEl.classList.remove('hidden', 'success', 'error');
-        statusEl.textContent = '提交中...';
-        submitBtn.disabled = true;
+    // 自动提交分数到全服排行
+    function submitGlobalScore(score) {
+        const name = getOrCreateUserId();
 
         fetch(getLeaderboardApiUrl(), {
             method: 'POST',
@@ -395,29 +357,17 @@ const Game = (function() {
             body: JSON.stringify({
                 name,
                 score,
-                playerId: getOrCreatePlayerId()
+                playerId: name
             })
         })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    let msg = data.personalBest
-                        ? `个人最高 ${data.personalBest.toLocaleString()} 分，未更新`
-                        : `🎉 全服排名第 ${data.rank} 名！`;
-                    statusEl.className = 'submit-status success';
-                    statusEl.textContent = msg;
                     fetchGlobalLeaderboard('global-leaderboard');
-                } else {
-                    statusEl.className = 'submit-status error';
-                    statusEl.textContent = data.error || '提交失败';
                 }
             })
             .catch(() => {
-                statusEl.className = 'submit-status error';
-                statusEl.textContent = '网络错误，请稍后重试';
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
+                // 静默失败，不影响游戏体验
             });
     }
 
@@ -664,21 +614,14 @@ const Game = (function() {
 
         document.getElementById('gameover-menu').classList.remove('hidden');
 
-        // 存储本地排行 + 刷新本地排行 UI
-        const savedName = getPlayerName() || '玩家';
-        addLocalScore(score, savedName);
+        // 存储本地排行
+        const userId = getOrCreateUserId();
+        addLocalScore(score, userId);
         renderLocalRanking('local-ranking-gameover');
 
-        // 加载全服排行榜
+        // 自动提交到全服排行（静默，不影响游戏体验）
+        submitGlobalScore(score);
         fetchGlobalLeaderboard('global-leaderboard');
-
-        // 清空上次提交状态
-        const statusEl = document.getElementById('submit-status');
-        statusEl.classList.add('hidden');
-        // 自动填入已保存的昵称
-        if (savedName) {
-            document.getElementById('player-name-input').value = savedName;
-        }
     }
 
     // 触发震屏
