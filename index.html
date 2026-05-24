@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bouncy Hop</title>
+    <!-- 引入圆润可爱的卡通 Google 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=14.0">
+    <!-- 显式定义空 favicon 阻断浏览器发起 404 请求 -->
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <!-- 整个游戏的容器，始终铺满可视视口 -->
+    <div id="game-container">
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas" width="480" height="800"></canvas>
+
+        <!-- HUD (游戏运行时的悬浮信息栏) -->
+        <div id="hud" class="ui-screen hidden">
+            <div class="hud-left">
+                <span id="hud-score-label">得分</span>
+                <span id="hud-score">0</span>
+            </div>
+            <div class="hud-right">
+                <button id="btn-pause" class="hud-btn" aria-label="暂停" title="暂停">
+                    <span class="pause-glyph"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 游戏开始/主菜单界面 -->
+        <div id="start-menu" class="ui-screen active">
+            <div class="menu-content">
+                <div class="game-logo">
+                    <span class="logo-word logo-doodle">Bouncy</span>
+                    <span class="logo-word logo-bounce">Hop!</span>
+                </div>
+                
+                <!-- 涂鸦怪角色预览（使用 canvas 复用游戏内绘制器，确保所有皮肤完全一致） -->
+                <canvas id="character-preview-canvas" width="120" height="120" class="character-preview-canvas"></canvas>
+
+                <div class="stats-box">
+                    <p class="stat-title">🏆 历史最高分</p>
+                    <p id="menu-high-score">0</p>
+                </div>
+
+                <div class="controls-info">
+                    <p>🎮 <b>操控方式</b></p>
+                    <p>PC 移动: 键盘 A/D 或 ← / →</p>
+                    <p>PC 射击: 空格 / W / ↑ 或 鼠标点屏幕左/右侧</p>
+                    <p>PC 暂停: P 键 或 ⏸ 按钮</p>
+                    <p>手机移动: 重力感应倾斜手机</p>
+                    <p>手机射击: 轻点屏幕左/右侧</p>
+                </div>
+
+                <!-- 皮肤选择 -->
+                <div class="skin-selector">
+                    <span class="skin-label">选择皮肤:</span>
+                    <div class="skin-options">
+                        <button class="skin-btn active" data-skin="default" style="background-color: #a3e635;" title="经典绿"></button>
+                        <button class="skin-btn" data-skin="pink" style="background-color: #f472b6;" title="蜜桃粉"></button>
+                        <button class="skin-btn" data-skin="blue" style="background-color: #60a5fa;" title="天空蓝"></button>
+                        <button class="skin-btn" data-skin="gold" style="background-color: #fbbf24;" title="黄金色"></button>
+                        <button class="skin-btn skin-kuromi" data-skin="kuromi" title="库洛米"></button>
+                        <button class="skin-btn skin-doraemon" data-skin="doraemon" title="哆啦A梦"></button>
+                        <button class="skin-btn skin-spongebob" data-skin="spongebob" title="海绵宝宝"></button>
+                        <button class="skin-btn skin-pikachu" data-skin="pikachu" title="皮卡丘"></button>
+                        <button class="skin-btn skin-girl" data-skin="girl" title="自定义女孩"></button>
+                    </div>
+                </div>
+
+                <button id="btn-start" class="btn-cartoon btn-play">开始冒险</button>
+            </div>
+        </div>
+
+        <!-- 游戏暂停界面 -->
+        <div id="pause-menu" class="ui-screen hidden">
+            <div class="menu-content glass-card">
+                <h2 class="menu-title">游戏暂停</h2>
+                <div class="button-group">
+                    <button id="btn-resume" class="btn-cartoon btn-blue">继续游戏</button>
+                    <button id="btn-restart-pause" class="btn-cartoon btn-orange">重新开始</button>
+                    <button id="btn-home-pause" class="btn-cartoon btn-red">主菜单</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏结束结算界面 -->
+        <div id="gameover-menu" class="ui-screen hidden">
+            <div class="menu-content glass-card animate-pop">
+                <h2 class="menu-title text-red">游戏结束!</h2>
+                
+                <div class="score-summary">
+                    <div class="score-item">
+                        <span class="label">本次得分</span>
+                        <span id="gameover-score" class="value">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="label">最高纪录</span>
+                        <span id="gameover-high-score" class="value text-gold">0</span>
+                    </div>
+                </div>
+
+                <div id="new-record-badge" class="new-record hidden">🎉 新纪录!</div>
+
+                <div class="button-group">
+                    <button id="btn-restart" class="btn-cartoon btn-play">再玩一次</button>
+                    <button id="btn-home" class="btn-cartoon btn-blue">返回主菜单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本号标签 -->
+    <div id="version-tag">v15.0</div>
+
+    <!-- 游戏脚本加载 (添加版本号强刷缓存) -->
+    <script src="src/assets.js?v=14.0"></script>
+    <script src="src/entities.js?v=12.0"></script>
+    <script src="src/physics.js?v=15.0"></script>
+    <script src="src/game.js?v=15.0"></script>
+</body>
+</html>

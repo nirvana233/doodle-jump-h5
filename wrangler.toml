@@ -1,0 +1,12 @@
+# ============================================================
+# Bouncy Hop — Cloudflare Pages 配置 (Wrangler)
+# ============================================================
+# 使用方式：
+#   方案A：通过 Cloudflare Dashboard 连接 GitHub（推荐）
+#   方案B：npx wrangler pages deploy . --project-name=bouncy-hop
+# ============================================================
+
+name = "bouncy-hop"
+compatibility_date = "2025-01-01"
+
+pages_build_output_dir = "/"

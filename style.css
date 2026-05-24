@@ -1,0 +1,842 @@
+/* ==========================================================================
+   Doodle Bounce! 炫彩霓虹磨砂玻璃卡通版样式系统
+   ========================================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --viewport-width: 100vw;
+    --viewport-height: 100vh;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0c0a21;
+}
+
+body {
+    background: #0c0a21;
+    /* Nunito 用于英文/数字，PingFang/Microsoft YaHei 用于中文，避免 Fredoka One 降级到系统时的不一致渲染 */
+    font-family: 'Nunito', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    color: #f8fafc;
+    position: fixed;
+    inset: 0;
+    width: var(--viewport-width);
+    height: var(--viewport-height);
+    min-height: 0;
+    overflow: hidden;
+    /* 防止 iOS 橡皮筋滚动 */
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+}
+
+/* 背景精细电竞网格细线效果，增强整体科技感 */
+body::before {
+    display: none;
+}
+
+/* ==========================================================================
+   高端电竞掌机式游戏容器
+   ========================================================================== */
+#game-container {
+    position: fixed;
+    inset: 0;
+    width: var(--viewport-width);
+    height: var(--viewport-height);
+    background-color: #0c0a21;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 0;
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #bae6fd;
+}
+
+/* 极矮屏：首屏继续完整展示，只进一步压缩垂直占用 */
+@media (max-height: 600px), (max-aspect-ratio: 9 / 20) {
+    .menu-content {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        gap: 2px;
+    }
+    .logo-word {
+        font-size: clamp(18px, 5.6vh, 34px);
+        -webkit-text-stroke-width: clamp(1px, 0.34vh, 2px);
+    }
+    .logo-bounce {
+        font-size: clamp(19px, 6vh, 36px);
+    }
+    .character-preview-canvas {
+        width: clamp(36px, 10vh, 54px);
+        height: clamp(36px, 10vh, 54px);
+    }
+    .stats-box {
+        padding-top: 3px;
+        padding-bottom: 3px;
+        border-width: 2px;
+    }
+    .stat-title {
+        font-size: 9px;
+    }
+    #menu-high-score {
+        font-size: clamp(16px, 4.2vh, 24px);
+    }
+    .controls-info {
+        font-size: clamp(8px, 2.2vh, 10px);
+        line-height: 1.15;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        border-width: 2px;
+        border-radius: 12px;
+    }
+    .skin-selector {
+        padding-top: 3px;
+        padding-bottom: 3px;
+        border-width: 2px;
+    }
+    .skin-label {
+        font-size: 9px;
+    }
+    .skin-btn {
+        width: clamp(18px, 5vh, 24px);
+        height: clamp(18px, 5vh, 24px);
+        border-width: 2px;
+    }
+    .btn-cartoon {
+        font-size: clamp(13px, 3.4vh, 18px);
+        padding-top: 6px;
+        padding-bottom: 6px;
+        border-width: 3px;
+    }
+}
+
+/* ==========================================================================
+   高级暗黑磨砂玻璃卡片界面
+   ========================================================================== */
+.ui-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    overflow: hidden;
+    z-index: 10;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    background: rgba(8, 5, 20, 0.35); /* 覆盖暗影 */
+}
+
+.ui-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.93) translateY(10px);
+}
+
+/* 通用隐藏类，适用于 HUD 内部子元素 (#new-record-badge 等) 等非 .ui-screen 节点。
+   .ui-screen 自己用 opacity 过渡，不会被这个规则影响（因为 .ui-screen.hidden 选择器
+   优先级更高） */
+.hidden:not(.ui-screen) {
+    display: none !important;
+}
+
+.menu-content {
+    width: min(100%, 560px);
+    height: 100%;
+    max-height: 100%;
+    padding: clamp(6px, 1.4vh, 18px) clamp(10px, 4vw, 34px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    gap: clamp(3px, 0.75vh, 10px);
+    flex: none;
+    transform: none !important;
+    overflow: hidden;
+}
+
+/* 霓虹磨砂玻璃卡片 */
+.glass-card {
+    background: rgba(13, 10, 31, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 4px solid #000;
+    border-radius: 28px;
+    /* 卡通平面黑色投影 + 霓虹发光 */
+    box-shadow: 
+        6px 6px 0px #000,
+        0 15px 30px rgba(168, 85, 247, 0.2),
+        inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.menu-content.glass-card {
+    width: min(88vw, 380px);
+    height: auto;
+    max-height: 100%;
+    padding: clamp(18px, 4vh, 34px) clamp(18px, 6vw, 28px);
+    justify-content: center;
+}
+
+/* ==========================================================================
+   HUD (进行中界面)
+   ========================================================================== */
+#hud {
+    height: calc(76px + env(safe-area-inset-top));
+    padding: 10px 16px 8px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#hud.hidden {
+    display: none;
+}
+
+.hud-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    min-height: 58px;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#hud-score-label {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: clamp(13px, 1.9vh, 16px);
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #c084fc; /* 明亮紫色 */
+    text-shadow: 
+        2px 2px 0px #000,
+        -1px -1px 0px #000,
+        1px -1px 0px #000,
+        -1px 1px 0px #000,
+        0 0 8px rgba(192, 132, 252, 0.6);
+}
+
+#hud-score {
+    font-family: 'Fredoka One', sans-serif;
+    display: block;
+    font-size: clamp(40px, 6.2vh, 54px); /* 显著加大字号，更具视觉冲击 */
+    line-height: 0.9;
+    color: #fff;
+    text-shadow: 
+        3px 3px 0px #000,
+        -1px -1px 0px #000,
+        1px -1px 0px #000,
+        -1px 1px 0px #000,
+        1px 1px 0px #000,
+        0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.hud-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: auto;
+    padding-top: 2px;
+}
+
+.hud-icon {
+    font-size: 26px;
+    filter: drop-shadow(0 0 6px #60a5fa) drop-shadow(2px 2px 0 #000);
+    animation: pulse 0.8s infinite alternate;
+}
+
+.hud-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 3px solid #000;
+    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    transition: transform 0.1s, box-shadow 0.1s;
+    outline: none;
+    padding: 0;
+}
+
+.hud-btn:hover {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0 #000;
+}
+
+.hud-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 #000;
+}
+
+/* 卡通双竖条暂停图标 */
+.pause-glyph {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 20px;
+}
+
+.pause-glyph::before,
+.pause-glyph::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 3px;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+.pause-glyph::before { left: 0; }
+.pause-glyph::after { right: 0; }
+
+/* ==========================================================================
+   卡通 Logo 升级 (炫彩发光)
+   ========================================================================== */
+.game-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0;
+    gap: 0;
+    flex-shrink: 0;
+}
+
+.logo-word {
+    font-family: 'Fredoka One', cursive, sans-serif;
+    font-size: clamp(22px, 6.2vh, 54px);
+    line-height: 1;
+    letter-spacing: 1.5px;
+    -webkit-text-stroke: clamp(1.5px, 0.42vh, 3.5px) #000;
+    color: #fff;
+}
+
+.logo-doodle {
+    color: #c084fc; /* 炫紫 */
+    text-shadow: 4px 4px 0px #000, 0 0 18px rgba(192, 132, 252, 0.5);
+    transform: rotate(-5deg);
+    animation: float-left 1.8s ease-in-out infinite alternate;
+}
+
+.logo-bounce {
+    color: #a3e635; /* 柠檬绿 */
+    font-size: clamp(24px, 6.8vh, 60px);
+    text-shadow: 4px 4px 0px #000, 0 0 22px rgba(163, 230, 53, 0.6);
+    transform: rotate(3deg);
+    animation: float-right 1.8s ease-in-out infinite alternate;
+}
+
+/* ==========================================================================
+   Doodler 形象展示区（canvas 版本，复用游戏内 Assets.Draw.player 渲染）
+   ========================================================================== */
+.character-preview-canvas {
+    width: clamp(48px, 11vh, 112px);
+    height: clamp(48px, 11vh, 112px);
+    margin-bottom: 0;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    animation: bounce-preview 1.4s infinite ease-in-out;
+}
+
+/* ==========================================================================
+   主菜单精致状态框与操作指南
+   ========================================================================== */
+.stats-box {
+    background: rgba(255, 255, 255, 0.05);
+    border: 3px solid #000;
+    border-radius: 20px;
+    padding: clamp(5px, 0.9vh, 14px) clamp(12px, 3vw, 24px);
+    margin-bottom: 0;
+    width: 100%;
+    max-width: 410px;
+    box-shadow: 4px 4px 0px #000;
+    flex-shrink: 0;
+}
+
+.stat-title {
+    font-size: clamp(10px, 1.55vh, 13px);
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+}
+
+#menu-high-score {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: clamp(21px, 3.7vh, 34px);
+    color: #eab308; /* 黄金霓虹数字 */
+    text-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
+}
+
+.controls-info {
+    font-size: clamp(10px, 1.45vh, 12px);
+    color: #f1f5f9;
+    line-height: 1.35;
+    background: rgba(255, 255, 255, 0.05);
+    border: 3.5px solid #000;
+    border-radius: 20px;
+    padding: clamp(6px, 1vh, 14px);
+    margin-bottom: 0;
+    width: 100%;
+    max-width: 410px;
+    text-shadow: 1px 1px 0 #000;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.controls-info b {
+    color: #fbcfe8;
+    text-shadow: 1px 1px 0 #000;
+}
+
+/* ==========================================================================
+   皮肤切换面板 (精致扁平胶囊)
+   ========================================================================== */
+.skin-selector {
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1.4vw, 12px);
+    margin-bottom: 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 3.5px solid #000;
+    padding: clamp(4px, 0.8vh, 8px) clamp(8px, 2.2vw, 18px);
+    border-radius: 24px;
+    box-shadow: 3px 3px 0px #000;
+    flex-shrink: 0;
+    max-width: 100%;
+}
+
+.skin-label {
+    font-weight: 900;
+    font-size: clamp(10px, 1.55vh, 13px);
+    color: #f1f5f9;
+    text-shadow: 1px 1px 0 #000;
+    white-space: nowrap;
+}
+
+.skin-options {
+    display: flex;
+    gap: clamp(5px, 1vw, 9px);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.skin-btn {
+    width: clamp(22px, 4vh, 30px);
+    height: clamp(22px, 4vh, 30px);
+    border-radius: 50%;
+    border: 3px solid #000;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+    outline: none;
+}
+
+.skin-btn.active {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 1.5px #c084fc;
+}
+
+/* 库洛米皮肤按钮：白色身体 + 一对黑色尖角耳 + 顶端绒球 */
+.skin-btn.skin-kuromi {
+    background: #f5f5f4;
+    position: relative;
+    overflow: visible;
+}
+.skin-btn.skin-kuromi::before {
+    /* 左尖角耳 (三角形) + 顶端绒球 (用 box-shadow 模拟) */
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 1px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 12px solid #1a1a1f;
+    transform: rotate(-12deg);
+    filter: drop-shadow(0 0 0.4px #000);
+}
+.skin-btn.skin-kuromi::after {
+    /* 右尖角耳 */
+    content: '';
+    position: absolute;
+    top: -10px;
+    right: 1px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 12px solid #1a1a1f;
+    transform: rotate(12deg);
+    filter: drop-shadow(0 0 0.4px #000);
+}
+
+/* 哆啦A梦皮肤按钮：蓝身 + 白脸 + 红色项圈 */
+.skin-btn.skin-doraemon {
+    background: #3b82f6;
+    position: relative;
+}
+.skin-btn.skin-doraemon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    width: 16px;
+    height: 12px;
+    background: #fafaf9;
+    border: 1.5px solid #000;
+    border-radius: 50%;
+}
+.skin-btn.skin-doraemon::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 22px;
+    height: 3px;
+    background: #dc2626;
+    border-radius: 1px;
+}
+
+/* 海绵宝宝皮肤按钮：黄身 + 棕色短裤条 */
+.skin-btn.skin-spongebob {
+    background: #fde047;
+    position: relative;
+}
+.skin-btn.skin-spongebob::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 6px;
+    width: 4px;
+    height: 4px;
+    background: rgba(180, 83, 9, 0.55);
+    border-radius: 50%;
+    box-shadow:
+        9px 2px 0 rgba(180, 83, 9, 0.55),
+        4px 9px 0 rgba(180, 83, 9, 0.55);
+}
+.skin-btn.skin-spongebob::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 22px;
+    height: 6px;
+    background: #a16207;
+    border-top: 1.5px solid #000;
+    border-radius: 0 0 4px 4px;
+}
+
+/* 皮卡丘皮肤按钮：黄身 + 黑尖耳 + 红腮红 */
+.skin-btn.skin-pikachu {
+    background: #facc15;
+    position: relative;
+    overflow: visible;
+}
+.skin-btn.skin-pikachu::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    left: 3px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 9px solid #facc15;
+    filter: drop-shadow(0 0 0.5px #000);
+    box-shadow: 0;
+}
+.skin-btn.skin-pikachu::after {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 3px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 9px solid #facc15;
+    filter: drop-shadow(0 0 0.5px #000);
+}
+
+/* 自定义女孩皮肤按钮：用真人照片缩略图作为按钮背景 */
+.skin-btn.skin-girl {
+    background-color: #fde7d2;
+    background-image: url('assets/skin-girl.png');
+    background-size: cover;
+    background-position: center 30%;
+}
+
+/* ==========================================================================
+   3D 卡通霓虹渐变大按钮
+   ========================================================================== */
+.btn-cartoon {
+    font-family: 'Fredoka One', 'Microsoft YaHei', sans-serif;
+    font-size: clamp(16px, 2.8vh, 23px);
+    padding: clamp(8px, 1.45vh, 14px) clamp(22px, 6vw, 38px);
+    border: 4px solid #000;
+    border-radius: 22px;
+    cursor: pointer;
+    color: #fff;
+    text-shadow: 2px 2px 0px #000;
+    box-shadow: 0 8px 0 #000;
+    transition: transform 0.1s, box-shadow 0.1s;
+    outline: none;
+    width: 100%;
+    max-width: min(250px, 72vw);
+    flex-shrink: 0;
+}
+
+.btn-cartoon:hover {
+    transform: translateY(2px);
+    box-shadow: 0 6px 0 #000;
+}
+
+.btn-cartoon:active {
+    transform: translateY(8px);
+    box-shadow: 0 0px 0 #000;
+}
+
+/* 各色渐变按钮设计 */
+.btn-play {
+    background: linear-gradient(135deg, #a3e635 0%, #22c55e 100%);
+    box-shadow: 0 8px 0 #000, 0 10px 20px rgba(34, 197, 94, 0.35);
+}
+.btn-play:hover {
+    box-shadow: 0 6px 0 #000, 0 8px 15px rgba(34, 197, 94, 0.3);
+}
+
+.btn-blue {
+    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+    box-shadow: 0 8px 0 #000, 0 10px 20px rgba(37, 99, 235, 0.35);
+}
+.btn-blue:hover {
+    box-shadow: 0 6px 0 #000, 0 8px 15px rgba(37, 99, 235, 0.3);
+}
+
+.btn-orange {
+    background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+    box-shadow: 0 8px 0 #000, 0 10px 20px rgba(234, 88, 12, 0.35);
+}
+.btn-orange:hover {
+    box-shadow: 0 6px 0 #000, 0 8px 15px rgba(234, 88, 12, 0.3);
+}
+
+.btn-red {
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    box-shadow: 0 8px 0 #000, 0 10px 20px rgba(220, 38, 38, 0.35);
+}
+.btn-red:hover {
+    box-shadow: 0 6px 0 #000, 0 8px 15px rgba(220, 38, 38, 0.3);
+}
+
+/* ==========================================================================
+   结算数据总结栏
+   ========================================================================== */
+.score-summary {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.score-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 3.5px solid #000;
+    border-radius: 20px;
+    padding: 14px 10px;
+    box-shadow: 3.5px 3.5px 0px #000;
+}
+
+.score-item .label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #f1f5f9;
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.score-item .value {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 30px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 6px rgba(255,255,255,0.3);
+}
+
+.text-gold {
+    color: #facc15 !important;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.6) !important;
+}
+
+.text-red {
+    color: #f43f5e !important;
+    /* Chinese-safe stack: 优先 Nunito / 系统中文，避免 Fredoka One 在中文降级渲染 */
+    font-family: 'Nunito', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    font-weight: 900;
+    font-size: 36px;
+    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 18px rgba(244, 63, 94, 0.4);
+    margin-bottom: 15px;
+}
+
+.menu-title {
+    font-family: 'Nunito', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    font-weight: 900;
+    font-size: 32px;
+    color: #fff;
+    text-shadow: 2.5px 2.5px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 12px rgba(255, 255, 255, 0.15);
+    margin-bottom: 24px;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    align-items: center;
+    margin-top: 15px;
+}
+
+/* 新纪录闪烁徽章 */
+.new-record {
+    background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+    color: #000;
+    border: 3.5px solid #000;
+    border-radius: 14px;
+    font-weight: 900;
+    font-size: 17px;
+    padding: 6px 20px;
+    box-shadow: 3.5px 3.5px 0px #000, 0 0 15px rgba(234, 179, 8, 0.4);
+    animation: jump-badge 0.5s infinite alternate;
+    margin-bottom: 12px;
+}
+
+/* ==========================================================================
+   版本号标签（右下角固定显示）
+   ========================================================================== */
+#version-tag {
+    position: fixed;
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    font-family: 'Nunito', monospace, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    z-index: 9999;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+    user-select: none;
+}
+
+/* ==========================================================================
+   动画特效
+   ========================================================================== */
+@keyframes bounce-preview {
+    0%, 100% {
+        transform: translateY(0) scaleY(1);
+    }
+    40% {
+        transform: translateY(-22px) scaleY(1.06);
+    }
+    50% {
+        transform: translateY(-22px) scaleY(1);
+    }
+    85% {
+        transform: translateY(6px) scaleY(0.91);
+    }
+}
+
+@keyframes blink-eye {
+    0%, 95%, 100% { transform: scaleY(1); }
+    97.5% { transform: scaleY(0.1); }
+}
+
+@keyframes float-left {
+    from { transform: rotate(-5deg) translateY(0); }
+    to { transform: rotate(-7deg) translateY(-4px); }
+}
+
+@keyframes float-right {
+    from { transform: rotate(3deg) translateY(0); }
+    to { transform: rotate(1deg) translateY(4px); }
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.16); }
+}
+
+@keyframes jump-badge {
+    from { transform: translateY(0) rotate(-4deg); }
+    to { transform: translateY(-9px) rotate(4deg); }
+}
+
+.animate-pop {
+    animation: pop-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop-in {
+    from {
+        transform: scale(0.85);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

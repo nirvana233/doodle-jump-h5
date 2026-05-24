@@ -1,0 +1,30 @@
+# ============================================================
+# Bouncy Hop — Git 忽略规则
+# ============================================================
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Node.js (如果本地安装了 Wrangler)
+node_modules/
+package-lock.json
+package.json
+
+# Wrangler 缓存
+.wrangler/
+
+# IDE 配置
+.idea/
+.vscode/
+*.code-workspace
+
+# 环境变量 (如果有 API Token)
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
