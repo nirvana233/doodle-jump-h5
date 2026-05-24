@@ -115,13 +115,18 @@ const Game = (function() {
         document.getElementById('menu-high-score').textContent = highScore;
 
         // 加载在线排行榜
-        fetchLeaderboard('leaderboard-list');
+        fetchGlobalLeaderboard('global-leaderboard');
+        fetchGlobalLeaderboard('global-leaderboard-start');
+        renderLocalRanking('local-ranking-start');
 
         // 恢复上次输入的昵称
         const savedName = getPlayerName();
         if (savedName) {
             document.getElementById('player-name-input').value = savedName;
         }
+
+        // 确保匿名设备 ID 已创建
+        getOrCreatePlayerId();
 
         // 初始化背景视差元素
         initBackgroundElements();
@@ -199,11 +204,13 @@ const Game = (function() {
             Assets.Sound.stopRocket();
             Assets.Sound.stopPropeller();
             resetGameWorld();
-            // 返回主菜单时刷新排行榜
-            fetchLeaderboard('leaderboard-list');
+            // 返回主菜单时刷新排行
+            fetchGlobalLeaderboard('global-leaderboard-start');
+            fetchGlobalLeaderboard('global-leaderboard');
+            renderLocalRanking('local-ranking-start');
         });
 
-        // 提交分数
+        // 提交分数到全服排行
         document.getElementById('btn-submit-score').addEventListener('click', () => {
             const nameInput = document.getElementById('player-name-input');
             const name = nameInput.value.trim();
@@ -215,7 +222,7 @@ const Game = (function() {
                 return;
             }
             savePlayerName(name);
-            submitScore(name, score);
+            submitGlobalScore(name, score);
         });
 
         // 回车键提交分数
@@ -275,24 +282,75 @@ const Game = (function() {
     }
 
     // ----------------------------------------------------------------------
-    // 3. 在线排行榜
+    // 3. 用户标识 + 本地排行 + 全服排行
     // ----------------------------------------------------------------------
+
+    /** 生成唯一匿名设备 ID（首次访问时创建） */
+    function getOrCreatePlayerId() {
+        const KEY = 'bouncy_player_id';
+        let id = localStorage.getItem(KEY);
+        if (!id) {
+            // 生成 v4 UUID
+            id = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(KEY, id);
+        }
+        return id;
+    }
+
     function getLeaderboardApiUrl() {
-        // Pages Functions 和页面同域名，使用相对路径
         return '/api/score';
     }
 
-    // 获取玩家的默认昵称（存储本地避免重复输入）
+    // 昵称存取
     function getPlayerName() {
         return localStorage.getItem('bouncy_player_name') || '';
     }
-
     function savePlayerName(name) {
         localStorage.setItem('bouncy_player_name', name);
     }
 
-    // 获取排行榜并渲染到指定容器
-    function fetchLeaderboard(containerId) {
+    // ---------- 本地排行（自己设备上的历史分数） ----------
+
+    function getLocalScores() {
+        try {
+            return JSON.parse(localStorage.getItem('bouncy_local_scores')) || [];
+        } catch { return []; }
+    }
+
+    function addLocalScore(score, name) {
+        const scores = getLocalScores();
+        scores.push({ score, name, date: new Date().toLocaleDateString() });
+        // 按分数降序排列，最多保留 50 条
+        scores.sort((a, b) => b.score - a.score);
+        if (scores.length > 50) scores.length = 50;
+        localStorage.setItem('bouncy_local_scores', JSON.stringify(scores));
+    }
+
+    function renderLocalRanking(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const scores = getLocalScores();
+        if (scores.length === 0) {
+            container.innerHTML = '<p class="leaderboard-loading">暂无本地记录</p>';
+            return;
+        }
+        container.innerHTML = scores.slice(0, 10).map((entry, i) => {
+            let rankText, rankClass = '';
+            if (i === 0) { rankClass = 'gold'; rankText = '🥇'; }
+            else if (i === 1) { rankClass = 'silver'; rankText = '🥈'; }
+            else if (i === 2) { rankClass = 'bronze'; rankText = '🥉'; }
+            else { rankText = '#' + (i + 1); }
+            return `<div class="leaderboard-item">
+                <span class="leaderboard-rank ${rankClass}">${rankText}</span>
+                <span class="leaderboard-name">${escapeHtml(entry.name || '玩家')}</span>
+                <span class="leaderboard-score">${entry.score.toLocaleString()}</span>
+            </div>`;
+        }).join('');
+    }
+
+    // ---------- 全服排行（在线 API） ----------
+
+    function fetchGlobalLeaderboard(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
@@ -304,11 +362,11 @@ const Game = (function() {
                     return;
                 }
                 container.innerHTML = data.scores.map((entry, i) => {
-                    let rankClass = '';
-                    let rankText = '#' + (i + 1);
+                    let rankText, rankClass = '';
                     if (i === 0) { rankClass = 'gold'; rankText = '🥇'; }
                     else if (i === 1) { rankClass = 'silver'; rankText = '🥈'; }
                     else if (i === 2) { rankClass = 'bronze'; rankText = '🥉'; }
+                    else { rankText = '#' + (i + 1); }
                     return `<div class="leaderboard-item">
                         <span class="leaderboard-rank ${rankClass}">${rankText}</span>
                         <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
@@ -317,12 +375,12 @@ const Game = (function() {
                 }).join('');
             })
             .catch(() => {
-                container.innerHTML = '<p class="leaderboard-loading">排行榜暂时不可用</p>';
+                container.innerHTML = '<p class="leaderboard-loading">全服排行暂时不可用</p>';
             });
     }
 
-    // 提交分数
-    function submitScore(name, score) {
+    // 提交分数到全服排行
+    function submitGlobalScore(name, score) {
         const statusEl = document.getElementById('submit-status');
         const submitBtn = document.getElementById('btn-submit-score');
         if (!statusEl || !submitBtn) return;
@@ -334,16 +392,21 @@ const Game = (function() {
         fetch(getLeaderboardApiUrl(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, score })
+            body: JSON.stringify({
+                name,
+                score,
+                playerId: getOrCreatePlayerId()
+            })
         })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
+                    let msg = data.personalBest
+                        ? `个人最高 ${data.personalBest.toLocaleString()} 分，未更新`
+                        : `🎉 全服排名第 ${data.rank} 名！`;
                     statusEl.className = 'submit-status success';
-                    statusEl.textContent = `🎉 排名第 ${data.rank} 名！`;
-                    // 刷新排行榜
-                    fetchLeaderboard('leaderboard-list');
-                    fetchLeaderboard('gameover-leaderboard');
+                    statusEl.textContent = msg;
+                    fetchGlobalLeaderboard('global-leaderboard');
                 } else {
                     statusEl.className = 'submit-status error';
                     statusEl.textContent = data.error || '提交失败';
@@ -358,7 +421,6 @@ const Game = (function() {
             });
     }
 
-    // HTML 转义工具
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -602,14 +664,18 @@ const Game = (function() {
 
         document.getElementById('gameover-menu').classList.remove('hidden');
 
-        // 加载在线排行榜
-        fetchLeaderboard('gameover-leaderboard');
+        // 存储本地排行 + 刷新本地排行 UI
+        const savedName = getPlayerName() || '玩家';
+        addLocalScore(score, savedName);
+        renderLocalRanking('local-ranking-gameover');
+
+        // 加载全服排行榜
+        fetchGlobalLeaderboard('global-leaderboard');
 
         // 清空上次提交状态
         const statusEl = document.getElementById('submit-status');
         statusEl.classList.add('hidden');
         // 自动填入已保存的昵称
-        const savedName = getPlayerName();
         if (savedName) {
             document.getElementById('player-name-input').value = savedName;
         }
