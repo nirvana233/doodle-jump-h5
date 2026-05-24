@@ -114,6 +114,15 @@ const Game = (function() {
         highScore = parseInt(localStorage.getItem('doodle_bounce_highscore') || '0');
         document.getElementById('menu-high-score').textContent = highScore;
 
+        // 加载在线排行榜
+        fetchLeaderboard('leaderboard-list');
+
+        // 恢复上次输入的昵称
+        const savedName = getPlayerName();
+        if (savedName) {
+            document.getElementById('player-name-input').value = savedName;
+        }
+
         // 初始化背景视差元素
         initBackgroundElements();
 
@@ -190,6 +199,30 @@ const Game = (function() {
             Assets.Sound.stopRocket();
             Assets.Sound.stopPropeller();
             resetGameWorld();
+            // 返回主菜单时刷新排行榜
+            fetchLeaderboard('leaderboard-list');
+        });
+
+        // 提交分数
+        document.getElementById('btn-submit-score').addEventListener('click', () => {
+            const nameInput = document.getElementById('player-name-input');
+            const name = nameInput.value.trim();
+            if (!name) {
+                const statusEl = document.getElementById('submit-status');
+                statusEl.className = 'submit-status error';
+                statusEl.textContent = '请输入昵称';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+            savePlayerName(name);
+            submitScore(name, score);
+        });
+
+        // 回车键提交分数
+        document.getElementById('player-name-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('btn-submit-score').click();
+            }
         });
 
         // 皮肤切换
@@ -242,7 +275,98 @@ const Game = (function() {
     }
 
     // ----------------------------------------------------------------------
-    // 3. 游戏手感输入处理器
+    // 3. 在线排行榜
+    // ----------------------------------------------------------------------
+    function getLeaderboardApiUrl() {
+        // Pages Functions 和页面同域名，使用相对路径
+        return '/api/score';
+    }
+
+    // 获取玩家的默认昵称（存储本地避免重复输入）
+    function getPlayerName() {
+        return localStorage.getItem('bouncy_player_name') || '';
+    }
+
+    function savePlayerName(name) {
+        localStorage.setItem('bouncy_player_name', name);
+    }
+
+    // 获取排行榜并渲染到指定容器
+    function fetchLeaderboard(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        fetch(getLeaderboardApiUrl())
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.scores || data.scores.length === 0) {
+                    container.innerHTML = '<p class="leaderboard-loading">暂无记录，快来挑战吧!</p>';
+                    return;
+                }
+                container.innerHTML = data.scores.map((entry, i) => {
+                    let rankClass = '';
+                    let rankText = '#' + (i + 1);
+                    if (i === 0) { rankClass = 'gold'; rankText = '🥇'; }
+                    else if (i === 1) { rankClass = 'silver'; rankText = '🥈'; }
+                    else if (i === 2) { rankClass = 'bronze'; rankText = '🥉'; }
+                    return `<div class="leaderboard-item">
+                        <span class="leaderboard-rank ${rankClass}">${rankText}</span>
+                        <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
+                        <span class="leaderboard-score">${entry.score.toLocaleString()}</span>
+                    </div>`;
+                }).join('');
+            })
+            .catch(() => {
+                container.innerHTML = '<p class="leaderboard-loading">排行榜暂时不可用</p>';
+            });
+    }
+
+    // 提交分数
+    function submitScore(name, score) {
+        const statusEl = document.getElementById('submit-status');
+        const submitBtn = document.getElementById('btn-submit-score');
+        if (!statusEl || !submitBtn) return;
+
+        statusEl.classList.remove('hidden', 'success', 'error');
+        statusEl.textContent = '提交中...';
+        submitBtn.disabled = true;
+
+        fetch(getLeaderboardApiUrl(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, score })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    statusEl.className = 'submit-status success';
+                    statusEl.textContent = `🎉 排名第 ${data.rank} 名！`;
+                    // 刷新排行榜
+                    fetchLeaderboard('leaderboard-list');
+                    fetchLeaderboard('gameover-leaderboard');
+                } else {
+                    statusEl.className = 'submit-status error';
+                    statusEl.textContent = data.error || '提交失败';
+                }
+            })
+            .catch(() => {
+                statusEl.className = 'submit-status error';
+                statusEl.textContent = '网络错误，请稍后重试';
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+            });
+    }
+
+    // HTML 转义工具
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ----------------------------------------------------------------------
+    // 4. 游戏手感输入处理器
     // ----------------------------------------------------------------------
     function bindInputs() {
         // 键盘按下
@@ -477,6 +601,18 @@ const Game = (function() {
         }
 
         document.getElementById('gameover-menu').classList.remove('hidden');
+
+        // 加载在线排行榜
+        fetchLeaderboard('gameover-leaderboard');
+
+        // 清空上次提交状态
+        const statusEl = document.getElementById('submit-status');
+        statusEl.classList.add('hidden');
+        // 自动填入已保存的昵称
+        const savedName = getPlayerName();
+        if (savedName) {
+            document.getElementById('player-name-input').value = savedName;
+        }
     }
 
     // 触发震屏

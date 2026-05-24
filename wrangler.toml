@@ -1,0 +1,18 @@
+# ============================================================
+# Bouncy Hop — Cloudflare Pages 配置
+# ============================================================
+# ⚠️ 重要：首次使用需先创建 KV 命名空间
+#   Dashboard → Workers & Pages → KV → 创建命名空间 → "BOUNCY_LEADERBOARD"
+#   然后进入 Pages 项目 → 设置 → Functions → KV 命名空间绑定
+#   变量名: LEADERBOARD_KV     (必须与 functions/api/score.js 中一致)
+#   KV 命名空间: BOUNCY_LEADERBOARD
+# ============================================================
+
+name = "doodle-jump-h5"
+pages_build_output_dir = "/"
+
+# KV 命名空间绑定（用于在线排行榜）
+# 开发者本地调试时取消注释并填入真实的 namespace_id
+# [[kv_namespaces]]
+# binding = "LEADERBOARD_KV"
+# id = "你的命名空间 ID"

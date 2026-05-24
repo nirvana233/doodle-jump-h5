@@ -41,8 +41,16 @@
                 <canvas id="character-preview-canvas" width="120" height="120" class="character-preview-canvas"></canvas>
 
                 <div class="stats-box">
-                    <p class="stat-title">🏆 历史最高分</p>
+                    <p class="stat-title">🏆 最高分</p>
                     <p id="menu-high-score">0</p>
+                </div>
+
+                <!-- 在线排行榜 -->
+                <div class="leaderboard-box">
+                    <p class="stat-title">🌐 在线排行榜</p>
+                    <div id="leaderboard-list" class="leaderboard-list">
+                        <p class="leaderboard-loading">加载中...</p>
+                    </div>
                 </div>
 
                 <div class="controls-info">
@@ -103,6 +111,22 @@
                 </div>
 
                 <div id="new-record-badge" class="new-record hidden">🎉 新纪录!</div>
+
+                <!-- 在线提交分数 -->
+                <div class="score-submit">
+                    <input type="text" id="player-name-input" class="name-input"
+                           placeholder="输入昵称上榜" maxlength="12">
+                    <button id="btn-submit-score" class="btn-cartoon btn-small btn-green">提交分数</button>
+                    <span id="submit-status" class="submit-status hidden"></span>
+                </div>
+
+                <!-- 游戏结束排行榜 -->
+                <div class="leaderboard-box leaderboard-compact">
+                    <p class="stat-title">🌐 在线排行榜</p>
+                    <div id="gameover-leaderboard" class="leaderboard-list">
+                        <p class="leaderboard-loading">加载中...</p>
+                    </div>
+                </div>
 
                 <div class="button-group">
                     <button id="btn-restart" class="btn-cartoon btn-play">再玩一次</button>
