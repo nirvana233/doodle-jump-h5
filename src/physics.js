@@ -27,7 +27,7 @@ const Physics = (function() {
     }
 
     // 2. 处理游戏内所有的物理碰撞
-    function checkCollisions(player, platforms, items, enemies, bullets, particles, camera, triggerScreenShake, onScoreChange) {
+    function checkCollisions(player, platforms, items, enemies, bullets, particles, camera, triggerScreenShake, onScoreChange, onPlayerDeath) {
         if (player.isDead) return;
         let playerFlightProtected = isFlightProtected(player);
         let playerEnemyCrashProtected = isEnemyCrashProtected(player);
@@ -219,6 +219,7 @@ const Physics = (function() {
                         player.vx = 0;
                         Assets.Sound.playGameOver();
                         triggerScreenShake(15, 40);
+                        if (onPlayerDeath) onPlayerDeath();
                     }
                     continue;
                 }
@@ -253,6 +254,7 @@ const Physics = (function() {
                         player.vy = -7; // 死亡时往上震一下，然后无力坠落
                         Assets.Sound.playGameOver();
                         triggerScreenShake(14, 30);
+                        if (onPlayerDeath) onPlayerDeath();
                     }
                 }
             }

@@ -984,28 +984,55 @@ body::before {
    ======================================== */
 .lb-btn {
     position: fixed;
-    left: 12px;
-    bottom: 12px;
+    left: 14px;
+    bottom: 14px;
     z-index: 1000;
-    width: 44px;
-    height: 44px;
-    border: none;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    width: 50px;
+    height: 50px;
+    border: 3px solid #000;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
     color: #fff;
-    font-size: 20px;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(99,102,241,0.4);
+    box-shadow: 3px 3px 0 #000, 0 0 20px rgba(99,102,241,0.35);
     transition: transform 0.15s, box-shadow 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Fredoka One', cursive;
+    padding: 0;
+}
+.lb-btn:hover {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0 #000, 0 0 16px rgba(99,102,241,0.3);
 }
 .lb-btn:active {
-    transform: scale(0.9);
-    box-shadow: 0 1px 4px rgba(99,102,241,0.3);
+    transform: translateY(3px) scale(0.95);
+    box-shadow: 0 0 0 #000, 0 0 12px rgba(99,102,241,0.25);
 }
+
+/* 排行榜立柱图标 */
+.lb-icon {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    height: 22px;
+}
+.lb-bar {
+    display: block;
+    width: 6px;
+    border-radius: 3px 3px 0 0;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255,255,255,0.6);
+    transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lb-bar-1 { height: 10px; }
+.lb-bar-2 { height: 16px; }
+.lb-bar-3 { height: 22px; }
+
+.lb-btn:hover .lb-bar-1 { height: 12px; }
+.lb-btn:hover .lb-bar-2 { height: 19px; }
+.lb-btn:hover .lb-bar-3 { height: 24px; }
 
 .lb-modal {
     position: fixed;

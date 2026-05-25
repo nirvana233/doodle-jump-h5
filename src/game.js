@@ -733,7 +733,7 @@ const Game = (function() {
             score += addedScore;
             document.getElementById('hud-score').textContent = score;
             spawnScorePopup(addedScore);
-        });
+        }, gameOver);
 
         // 9. 摄像机跟随向上滚动
         Physics.updateCamera(player, camera, (addedScore) => {

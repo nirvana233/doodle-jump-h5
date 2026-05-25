@@ -6,7 +6,7 @@
     <title>Bouncy Hop</title>
     <!-- 引入圆润可爱的卡通 Google 字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=15.0">
+    <link rel="stylesheet" href="style.css?v=1.0.1">
     <!-- 显式定义空 favicon 阻断浏览器发起 404 请求 -->
     <link rel="icon" href="data:,">
 </head>
@@ -113,7 +113,13 @@
     </div>
 
     <!-- 排行榜入口按钮（左下角浮动） -->
-    <button id="btn-leaderboard" class="lb-btn">🏆</button>
+    <button id="btn-leaderboard" class="lb-btn" title="排行榜">
+        <span class="lb-icon">
+            <span class="lb-bar lb-bar-1"></span>
+            <span class="lb-bar lb-bar-2"></span>
+            <span class="lb-bar lb-bar-3"></span>
+        </span>
+    </button>
 
     <!-- 排行榜弹窗 -->
     <div id="leaderboard-modal" class="lb-modal hidden">
@@ -130,12 +136,12 @@
     </div>
 
     <!-- 版本号标签 -->
-    <div id="version-tag">v16.0</div>
+    <div id="version-tag">v1.0.1</div>
 
     <!-- 游戏脚本加载 (添加版本号强刷缓存) -->
-    <script src="src/assets.js?v=14.0"></script>
-    <script src="src/entities.js?v=12.0"></script>
-    <script src="src/physics.js?v=15.0"></script>
-    <script src="src/game.js?v=16.0"></script>
+    <script src="src/assets.js?v=1.0.1"></script>
+    <script src="src/entities.js?v=1.0.1"></script>
+    <script src="src/physics.js?v=1.0.1"></script>
+    <script src="src/game.js?v=1.0.1"></script>
 </body>
 </html>
